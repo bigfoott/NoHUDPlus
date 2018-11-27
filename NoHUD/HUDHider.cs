@@ -32,18 +32,28 @@ namespace NoHUDPlus
 
         IEnumerator WaitForLoad()
         {
-            while (multi == null || combo == null || score == null)
+            var gcss = GameObject.FindObjectOfType<GameplayCoreSceneSetup>();
+
+            while (gcss == null)
             {
                 yield return new WaitForSeconds(0.02f);
+                gcss = GameObject.FindObjectOfType<GameplayCoreSceneSetup>();
+            }
+
+            var gameHUDGO = (GameObject)gcss.GetField("_gameHUDGO");
+            if (!gameHUDGO.activeSelf)
+            {
+                Console.WriteLine("[NoHUDPlus] NoHUDsAndTexts is true. Re-enabling game HUD.");
+                gameHUDGO.SetActive(true);
 
                 multi = GameObject.Find("MultiplierPanel");
                 combo = GameObject.Find("ComboPanel");
                 score = GameObject.Find("ScorePanel");
+
+                Console.WriteLine("[NoHUDPlus] Found base game objects. Initializing HUDHider.");
+
+                StartCoroutine(Init());
             }
-
-            Console.WriteLine("[NoHUDPlus] Found base game objects. Initializing HUDHider.");
-
-            StartCoroutine(Init());
         }
 
         IEnumerator Init()
@@ -63,7 +73,7 @@ namespace NoHUDPlus
             Camera livCamera = FindObjectsOfType<Camera>().FirstOrDefault(x => x.name == "LIV External Camera");
             var baseMask = mainCamera.cullingMask;
 
-            if (ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", false, true))
+            if (ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", true, true))
                 mainCamera.cullingMask &= ~(1 << 26);
             else
                 mainCamera.cullingMask |= (1 << 26);

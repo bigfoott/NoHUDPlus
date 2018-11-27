@@ -8,9 +8,9 @@ using IllusionPlugin;
 using Harmony;
 using System.Reflection;
 using IllusionInjector;
-using CustomUI.GameplaySettings;
 using CustomUI.Utilities;
 using UnityEngine.UI;
+using CustomUI.Settings;
 
 namespace NoHUDPlus
 {
@@ -28,7 +28,7 @@ namespace NoHUDPlus
         private void OnActiveSceneChanged(Scene arg0, Scene arg1)
         {
             if (arg1.name == "GameCore" &&
-                (ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", false, true) || ModPrefs.GetBool("NoHUDPlus", "MirrorEnabled", false, true)))
+                (ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", true, true) || (CamPlusInstalled && ModPrefs.GetBool("NoHUDPlus", "MirrorEnabled", true, true))))
                 new GameObject("HUDHider").AddComponent<HUDHider>();
         }
         private void OnSceneLoaded(Scene arg0, LoadSceneMode arg1)
@@ -46,28 +46,27 @@ namespace NoHUDPlus
 
             if (arg0.name != "Menu") return;
 
-            var sprite = UIUtilities.LoadSpriteFromResources("NoHUD.Resources.NOHUDIcon.png");
-            
-            ToggleOption hmd = GameplaySettingsUI.CreateToggleOption("NoHUD - HMD", "Hide UI elements that show in-game in your VR headset.", sprite);
-            hmd.GetValue = ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", false, true);
-            hmd.OnToggle += delegate (bool value) { ModPrefs.SetBool("NoHUDPlus", "HMDEnabled", value); };
+            var menu = SettingsUI.CreateSubMenu("NoHUDPlus");
+
+            var hmd = menu.AddBool("Enable in HMD");
+            hmd.GetValue += delegate { return ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", true, true); };
+            hmd.SetValue += delegate (bool value) { ModPrefs.SetBool("NoHUDPlus", "HMDEnabled", value); };
 
             if (CamPlusInstalled)
             {
-                ToggleOption mirror = GameplaySettingsUI.CreateToggleOption("NoHUD - Mirror", "Hide UI elements that show in-game in the game mirror.", sprite);
-                mirror.GetValue = ModPrefs.GetBool("NoHUDPlus", "MirrorEnabled", false, true);
-                mirror.OnToggle += delegate (bool value) { ModPrefs.SetBool("NoHUDPlus", "MirrorEnabled", value); };
+                var mirror = menu.AddBool("Enable in Mirror");
+                mirror.GetValue += delegate { return ModPrefs.GetBool("NoHUDPlus", "MirrorEnabled", true, true); };
+                mirror.SetValue += delegate (bool value) { ModPrefs.SetBool("NoHUDPlus", "MirrorEnabled", value); };
             }
         }
-
         public void OnApplicationStart()
         {
             SceneManager.activeSceneChanged += OnActiveSceneChanged;
             SceneManager.sceneLoaded += OnSceneLoaded;
             
             // set default modpref values
-            ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", false, true);
-            ModPrefs.GetBool("NoHUDPlus", "MirrorEnabled", false, true);
+            ModPrefs.GetBool("NoHUDPlus", "HMDEnabled", true, true);
+            ModPrefs.GetBool("NoHUDPlus", "MirrorEnabled", true, true);
 
             try
             {
